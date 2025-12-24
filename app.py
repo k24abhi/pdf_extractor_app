@@ -9,13 +9,13 @@ import io
 
 st.set_page_config(page_title="PDF Table Extractor", layout="wide", page_icon="📊")
 
-def display_pdf_as_images(file_path, max_pages=3):
+def display_pdf_as_images(file_path):
     """Convert PDF pages to images for display (more browser-compatible)"""
     images = []
     try:
         with pdfplumber.open(file_path) as pdf:
-            num_pages = min(len(pdf.pages), max_pages)
-            for i in range(num_pages):
+            total_pages = len(pdf.pages)
+            for i in range(total_pages):
                 # Convert page to image
                 page = pdf.pages[i]
                 img = page.to_image(resolution=150)
@@ -147,17 +147,7 @@ def main():
                     with col1:
                         st.markdown("### 📄 PDF Preview")
                         
-                        # Display PDF pages as images
-                        pdf_images = display_pdf_as_images(pdf_file, max_pages=3)
-                        if pdf_images:
-                            for page_num, img in pdf_images:
-                                st.image(img, caption=f"Page {page_num}", use_container_width=True)
-                            if len(pdf_images) < len(tables):
-                                st.info(f"Showing first {len(pdf_images)} pages. Download PDF to view all pages.")
-                        else:
-                            st.info("📄 PDF preview not available.")
-                        
-                        # Display PDF download button
+                        # Display PDF download button at top
                         with open(pdf_file, "rb") as pdf_data:
                             st.download_button(
                                 label="📥 Download Full PDF",
@@ -167,6 +157,17 @@ def main():
                                 key=f"download_full_{unique_key}",
                                 use_container_width=True
                             )
+                        
+                        # Display PDF pages as images in a scrollable container
+                        pdf_images = display_pdf_as_images(pdf_file)
+                        if pdf_images:
+                            st.markdown(f"**{len(pdf_images)} pages** (scroll to view all)")
+                            # Create a scrollable container
+                            with st.container(height=600):
+                                for page_num, img in pdf_images:
+                                    st.image(img, caption=f"Page {page_num}", use_container_width=True)
+                        else:
+                            st.info("📄 PDF preview not available.")
                     
                     # Right column: Current Table
                     with col2:
