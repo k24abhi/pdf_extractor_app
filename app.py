@@ -88,17 +88,33 @@ def main():
             # Convert to Path object for better cross-platform compatibility
             folder_path_obj = Path(folder_path)
             
+            # Additional debugging - check with absolute path
+            if not folder_path_obj.is_absolute():
+                folder_path_obj = folder_path_obj.resolve()
+            
             # Debug info in expander
-            with st.expander("🔍 Path Debug Info (click to expand)", expanded=False):
+            with st.expander("🔍 Path Debug Info (click to expand)", expanded=True):
+                st.code(f"Current working directory: {os.getcwd()}")
                 st.code(f"Original input: {repr(folder_path_original)}")
                 st.code(f"Cleaned path: {repr(folder_path)}")
-                st.code(f"Exists: {folder_path_obj.exists()}")
-                st.code(f"Is directory: {folder_path_obj.is_dir()}")
-                if folder_path_obj.exists():
-                    st.code(f"Absolute path: {folder_path_obj.resolve()}")
+                st.code(f"Absolute path: {folder_path_obj.resolve()}")
+                st.code(f"Exists (os.path.exists): {os.path.exists(str(folder_path_obj))}")
+                st.code(f"Exists (Path.exists): {folder_path_obj.exists()}")
+                st.code(f"Is directory (os.path.isdir): {os.path.isdir(str(folder_path_obj))}")
+                st.code(f"Is directory (Path.is_dir): {folder_path_obj.is_dir()}")
+                
+                # Try listing parent directory
+                try:
+                    parent = folder_path_obj.parent
+                    if parent.exists():
+                        items = list(parent.iterdir())
+                        st.code(f"Parent directory exists: {parent}")
+                        st.code(f"Items in parent: {[item.name for item in items[:10]]}")
+                except Exception as e:
+                    st.code(f"Error checking parent: {e}")
             
             if folder_path_obj.exists() and folder_path_obj.is_dir():
-                pdf_files = get_pdf_files_from_folder(folder_path)
+                pdf_files = get_pdf_files_from_folder(str(folder_path_obj))
                 if pdf_files:
                     st.success(f"Found {len(pdf_files)} PDF file(s) in the folder")
                 else:
