@@ -82,8 +82,10 @@ def main():
     if pdf_files:
         st.write(f"### Processing {len(pdf_files)} PDF file(s)")
         
-        for pdf_file in pdf_files:
+        for pdf_idx, pdf_file in enumerate(pdf_files):
             file_name = os.path.basename(pdf_file)
+            # Create unique key using index to avoid duplicates
+            unique_key = f"pdf_{pdf_idx}_{file_name}"
             
             with st.expander(f"📄 {file_name}", expanded=True):
                 # Display file path
@@ -96,7 +98,7 @@ def main():
                         data=pdf_download,
                         file_name=file_name,
                         mime="application/pdf",
-                        key=f"download_{file_name}"
+                        key=f"download_{unique_key}"
                     )
                 
                 # Extract tables
@@ -110,23 +112,23 @@ def main():
                     st.success(f"Found {len(tables)} table(s)")
                     
                     # Initialize session state for table navigation
-                    if f"table_idx_{file_name}" not in st.session_state:
-                        st.session_state[f"table_idx_{file_name}"] = 0
+                    if f"table_idx_{unique_key}" not in st.session_state:
+                        st.session_state[f"table_idx_{unique_key}"] = 0
                     
-                    current_idx = st.session_state[f"table_idx_{file_name}"]
+                    current_idx = st.session_state[f"table_idx_{unique_key}"]
                     
                     # Navigation buttons
                     if len(tables) > 1:
                         nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
                         with nav_col1:
-                            if st.button("⬅️ Previous", key=f"prev_{file_name}", disabled=(current_idx == 0)):
-                                st.session_state[f"table_idx_{file_name}"] = max(0, current_idx - 1)
+                            if st.button("⬅️ Previous", key=f"prev_{unique_key}", disabled=(current_idx == 0)):
+                                st.session_state[f"table_idx_{unique_key}"] = max(0, current_idx - 1)
                                 st.rerun()
                         with nav_col2:
                             st.markdown(f"<h4 style='text-align: center;'>Table {current_idx + 1} of {len(tables)}</h4>", unsafe_allow_html=True)
                         with nav_col3:
-                            if st.button("Next ➡️", key=f"next_{file_name}", disabled=(current_idx >= len(tables) - 1)):
-                                st.session_state[f"table_idx_{file_name}"] = min(len(tables) - 1, current_idx + 1)
+                            if st.button("Next ➡️", key=f"next_{unique_key}", disabled=(current_idx >= len(tables) - 1)):
+                                st.session_state[f"table_idx_{unique_key}"] = min(len(tables) - 1, current_idx + 1)
                                 st.rerun()
                     
                     # Create side-by-side layout
@@ -154,7 +156,7 @@ def main():
                             data=csv,
                             file_name=f"{Path(file_name).stem}_table_{current_idx + 1}_page_{table_info['page']}.csv",
                             mime="text/csv",
-                            key=f"{file_name}_table_{current_idx}"
+                            key=f"csv_{unique_key}_table_{current_idx}"
                         )
                 else:
                     st.warning("No tables found in this PDF")
