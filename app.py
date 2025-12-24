@@ -69,14 +69,23 @@ def main():
             help="Enter the full path to the folder containing PDF files"
         )
         
-        if folder_path and os.path.exists(folder_path):
-            pdf_files = get_pdf_files_from_folder(folder_path)
-            if pdf_files:
-                st.success(f"Found {len(pdf_files)} PDF file(s) in the folder")
+        if folder_path:
+            # Clean and normalize the path
+            folder_path = folder_path.strip().strip('"').strip("'")
+            folder_path = os.path.normpath(folder_path)
+            
+            # Convert to Path object for better cross-platform compatibility
+            folder_path_obj = Path(folder_path)
+            
+            if folder_path_obj.exists() and folder_path_obj.is_dir():
+                pdf_files = get_pdf_files_from_folder(folder_path)
+                if pdf_files:
+                    st.success(f"Found {len(pdf_files)} PDF file(s) in the folder")
+                else:
+                    st.warning("No PDF files found in the specified folder")
             else:
-                st.warning("No PDF files found in the specified folder")
-        elif folder_path:
-            st.error("Folder path does not exist")
+                st.error(f"Folder path does not exist or is not a directory: `{folder_path}`")
+                st.info("💡 Tip: Copy the full path from File Explorer. Right-click the folder → Copy as path")
     
     # Process PDF files
     if pdf_files:
