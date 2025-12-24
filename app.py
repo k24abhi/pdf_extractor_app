@@ -132,11 +132,27 @@ def main():
                     # Create side-by-side layout
                     col1, col2 = st.columns([1, 1])
                     
-                    # Left column: PDF Viewer
+                    # Left column: PDF Download/Info
                     with col1:
-                        st.markdown("### 📄 PDF Preview")
-                        pdf_iframe = display_pdf(pdf_file)
-                        st.markdown(pdf_iframe, unsafe_allow_html=True)
+                        st.markdown("### 📄 PDF Document")
+                        
+                        # Display PDF download button prominently
+                        with open(pdf_file, "rb") as pdf_data:
+                            st.download_button(
+                                label="📥 Download Full PDF",
+                                data=pdf_data,
+                                file_name=file_name,
+                                mime="application/pdf",
+                                key=f"download_full_{unique_key}",
+                                use_container_width=True
+                            )
+                        
+                        # Try to display PDF preview (may not work in all browsers/deployments)
+                        try:
+                            pdf_iframe = display_pdf(pdf_file)
+                            st.markdown(pdf_iframe, unsafe_allow_html=True)
+                        except Exception as e:
+                            st.info("📄 PDF preview not available in this environment. Use the download button above to view the PDF.")
                     
                     # Right column: Current Table
                     with col2:
