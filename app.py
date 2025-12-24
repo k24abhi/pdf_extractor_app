@@ -140,8 +140,8 @@ def main():
                                 st.session_state[f"table_idx_{unique_key}"] = min(len(tables) - 1, current_idx + 1)
                                 st.rerun()
                     
-                    # Create side-by-side layout
-                    col1, col2 = st.columns([1, 1])
+                    # Create side-by-side layout with vertical alignment
+                    col1, col2 = st.columns([1, 1], vertical_alignment="top")
                     
                     # Left column: PDF Preview
                     with col1:
