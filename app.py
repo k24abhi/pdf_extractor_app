@@ -37,9 +37,18 @@ def main():
         help="Enhanced: Detects column separators based on vertical spacing patterns. Legacy: Simple spatial positioning."
     )
     
+    # Detect if running locally or in cloud
+    is_local = os.path.exists(r"C:\repos") or os.path.exists("/home")  # Simple check
+    
+    # Only show folder option for local development
+    if is_local and (os.name == 'nt' or os.path.exists(os.getcwd())):
+        input_options = ["Upload Files", "Select Folder"]
+    else:
+        input_options = ["Upload Files"]
+        
     input_method = st.sidebar.radio(
         "Select Input Method:",
-        ["Upload Files", "Select Folder"]
+        input_options
     )
     
     pdf_files = []
@@ -63,7 +72,7 @@ def main():
                     f.write(uploaded_file.getbuffer())
                 pdf_files.append(str(temp_path))
     
-    else:  # Select Folder
+    elif input_method == "Select Folder":  # Only available locally
         folder_path = st.text_input(
             "Enter folder path:",
             help="Enter the full path to the folder containing PDF files",
