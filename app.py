@@ -66,16 +66,27 @@ def main():
     else:  # Select Folder
         folder_path = st.text_input(
             "Enter folder path:",
-            help="Enter the full path to the folder containing PDF files"
+            help="Enter the full path to the folder containing PDF files",
+            key="folder_path_input"
         )
         
         if folder_path:
             # Clean and normalize the path
+            folder_path_original = folder_path
             folder_path = folder_path.strip().strip('"').strip("'")
             folder_path = os.path.normpath(folder_path)
             
             # Convert to Path object for better cross-platform compatibility
             folder_path_obj = Path(folder_path)
+            
+            # Debug info in expander
+            with st.expander("🔍 Path Debug Info (click to expand)", expanded=False):
+                st.code(f"Original input: {repr(folder_path_original)}")
+                st.code(f"Cleaned path: {repr(folder_path)}")
+                st.code(f"Exists: {folder_path_obj.exists()}")
+                st.code(f"Is directory: {folder_path_obj.is_dir()}")
+                if folder_path_obj.exists():
+                    st.code(f"Absolute path: {folder_path_obj.resolve()}")
             
             if folder_path_obj.exists() and folder_path_obj.is_dir():
                 pdf_files = get_pdf_files_from_folder(folder_path)
@@ -84,8 +95,13 @@ def main():
                 else:
                     st.warning("No PDF files found in the specified folder")
             else:
-                st.error(f"Folder path does not exist or is not a directory: `{folder_path}`")
-                st.info("💡 Tip: Copy the full path from File Explorer. Right-click the folder → Copy as path")
+                st.error(f"❌ Folder path does not exist or is not a directory")
+                st.code(folder_path)
+                if not folder_path_obj.exists():
+                    st.info("💡 The path does not exist. Please check for typos or verify the folder exists.")
+                elif not folder_path_obj.is_dir():
+                    st.info("💡 This path exists but is a file, not a folder. Please provide a folder path.")
+                st.info("💡 Tip: Copy the full path from File Explorer. Right-click the folder → 'Copy as path'")
     
     # Process PDF files
     if pdf_files:
