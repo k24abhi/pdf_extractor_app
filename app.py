@@ -3,15 +3,26 @@ import os
 from pathlib import Path
 import base64
 from extraction_algorithm import extract_table_with_column_detection, extract_table_spatial
+import pdfplumber
+from PIL import Image
+import io
 
 st.set_page_config(page_title="PDF Table Extractor", layout="wide", page_icon="📊")
 
-def display_pdf(file_path):
-    """Display PDF in an iframe"""
-    with open(file_path, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
-    return pdf_display
+def display_pdf_as_images(file_path, max_pages=3):
+    """Convert PDF pages to images for display (more browser-compatible)"""
+    images = []
+    try:
+        with pdfplumber.open(file_path) as pdf:
+            num_pages = min(len(pdf.pages), max_pages)
+            for i in range(num_pages):
+                # Convert page to image
+                page = pdf.pages[i]
+                img = page.to_image(resolution=150)
+                images.append((i + 1, img.original))
+    except Exception as e:
+        st.error(f"Error converting PDF to images: {e}")
+    return images
 
 def get_pdf_files_from_folder(folder_path):
     """Recursively get all PDF files from a folder"""
@@ -132,11 +143,21 @@ def main():
                     # Create side-by-side layout
                     col1, col2 = st.columns([1, 1])
                     
-                    # Left column: PDF Download/Info
+                    # Left column: PDF Preview
                     with col1:
-                        st.markdown("### 📄 PDF Document")
+                        st.markdown("### 📄 PDF Preview")
                         
-                        # Display PDF download button prominently
+                        # Display PDF pages as images
+                        pdf_images = display_pdf_as_images(pdf_file, max_pages=3)
+                        if pdf_images:
+                            for page_num, img in pdf_images:
+                                st.image(img, caption=f"Page {page_num}", use_container_width=True)
+                            if len(pdf_images) < len(tables):
+                                st.info(f"Showing first {len(pdf_images)} pages. Download PDF to view all pages.")
+                        else:
+                            st.info("📄 PDF preview not available.")
+                        
+                        # Display PDF download button
                         with open(pdf_file, "rb") as pdf_data:
                             st.download_button(
                                 label="📥 Download Full PDF",
@@ -146,13 +167,6 @@ def main():
                                 key=f"download_full_{unique_key}",
                                 use_container_width=True
                             )
-                        
-                        # Try to display PDF preview (may not work in all browsers/deployments)
-                        try:
-                            pdf_iframe = display_pdf(pdf_file)
-                            st.markdown(pdf_iframe, unsafe_allow_html=True)
-                        except Exception as e:
-                            st.info("📄 PDF preview not available in this environment. Use the download button above to view the PDF.")
                     
                     # Right column: Current Table
                     with col2:
