@@ -174,11 +174,6 @@ def main():
                         table_info = tables[current_idx]
                         st.markdown(f"### 📊 Table {current_idx + 1} (Page {table_info['page']})")
                         df = table_info['dataframe']
-                        
-                        # Display dataframe
-                        st.dataframe(df, use_container_width=True, height=500)
-                        
-                        # Download button for CSV
                         csv = df.to_csv(index=False)
                         st.download_button(
                             label=f"📥 Download Table {current_idx + 1} as CSV",
@@ -187,6 +182,12 @@ def main():
                             mime="text/csv",
                             key=f"csv_{unique_key}_table_{current_idx}"
                         )
+                        
+                        # Display dataframe
+                        st.dataframe(df, use_container_width=True, height=500)
+                        
+                        # Download button for CSV
+                        
                 else:
                     st.warning("No tables found in this PDF")
     
