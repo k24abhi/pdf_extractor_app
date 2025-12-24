@@ -25,7 +25,7 @@ def get_pdf_files_from_folder(folder_path):
 
 def main():
     st.title("📊 PDF Table Extractor")
-    st.write("Upload PDF files or select a folder to extract tables from PDF documents")
+    st.write("Upload PDF files to extract tables from PDF documents")
     
     # Sidebar for options
     st.sidebar.header("Options")
@@ -38,95 +38,43 @@ def main():
     )
     
     # Detect if running locally or in cloud
-    is_local = os.path.exists(r"C:\repos") or os.path.exists("/home")  # Simple check
+    is_cloud = os.getcwd().startswith('/mount/src/') or os.getcwd().startswith('/app/')
     
-    # Only show folder option for local development
-    if is_local and (os.name == 'nt' or os.path.exists(os.getcwd())):
-        input_options = ["Upload Files", "Select Folder"]
-    else:
-        input_options = ["Upload Files"]
-        
-    input_method = st.sidebar.radio(
-        "Select Input Method:",
-        input_options
+    st.sidebar.header("Upload PDFs")
+    if is_cloud:
+        st.sidebar.info("ℹ️ Running in cloud mode")
+    
+    st.sidebar.markdown("""
+    **📁 How to upload folder contents:**
+    1. Click 'Browse files' below
+    2. In the file dialog, press `Ctrl+A` (or `Cmd+A` on Mac) to select all PDFs
+    3. Or hold `Ctrl/Cmd` and click to select multiple files
+    4. You can select files from different folders
+    """)
+    
+    uploaded_files = st.sidebar.file_uploader(
+        "Choose PDF files (multiple files allowed)", 
+        type=['pdf'], 
+        accept_multiple_files=True,
+        help="Select all PDF files from your folder(s). You can select files from multiple folders."
     )
     
     pdf_files = []
     
-    if input_method == "Upload Files":
-        uploaded_files = st.file_uploader(
-            "Choose PDF files", 
-            type=['pdf'], 
-            accept_multiple_files=True
-        )
+    if uploaded_files:
+        # Save uploaded files temporarily
+        temp_dir = Path("temp_pdfs")
+        temp_dir.mkdir(exist_ok=True)
         
-        if uploaded_files:
-            # Save uploaded files temporarily
-            temp_dir = Path("temp_pdfs")
-            temp_dir.mkdir(exist_ok=True)
-            
-            pdf_files = []
-            for uploaded_file in uploaded_files:
-                temp_path = temp_dir / uploaded_file.name
-                with open(temp_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                pdf_files.append(str(temp_path))
-    
-    elif input_method == "Select Folder":  # Only available locally
-        folder_path = st.text_input(
-            "Enter folder path:",
-            help="Enter the full path to the folder containing PDF files",
-            key="folder_path_input"
-        )
+        pdf_files = []
+        for uploaded_file in uploaded_files:
+            temp_path = temp_dir / uploaded_file.name
+            with open(temp_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            pdf_files.append(str(temp_path))
         
-        if folder_path:
-            # Clean and normalize the path
-            folder_path_original = folder_path
-            folder_path = folder_path.strip().strip('"').strip("'")
-            folder_path = os.path.normpath(folder_path)
-            
-            # Convert to Path object for better cross-platform compatibility
-            folder_path_obj = Path(folder_path)
-            
-            # Additional debugging - check with absolute path
-            if not folder_path_obj.is_absolute():
-                folder_path_obj = folder_path_obj.resolve()
-            
-            # Debug info in expander
-            with st.expander("🔍 Path Debug Info (click to expand)", expanded=True):
-                st.code(f"Current working directory: {os.getcwd()}")
-                st.code(f"Original input: {repr(folder_path_original)}")
-                st.code(f"Cleaned path: {repr(folder_path)}")
-                st.code(f"Absolute path: {folder_path_obj.resolve()}")
-                st.code(f"Exists (os.path.exists): {os.path.exists(str(folder_path_obj))}")
-                st.code(f"Exists (Path.exists): {folder_path_obj.exists()}")
-                st.code(f"Is directory (os.path.isdir): {os.path.isdir(str(folder_path_obj))}")
-                st.code(f"Is directory (Path.is_dir): {folder_path_obj.is_dir()}")
-                
-                # Try listing parent directory
-                try:
-                    parent = folder_path_obj.parent
-                    if parent.exists():
-                        items = list(parent.iterdir())
-                        st.code(f"Parent directory exists: {parent}")
-                        st.code(f"Items in parent: {[item.name for item in items[:10]]}")
-                except Exception as e:
-                    st.code(f"Error checking parent: {e}")
-            
-            if folder_path_obj.exists() and folder_path_obj.is_dir():
-                pdf_files = get_pdf_files_from_folder(str(folder_path_obj))
-                if pdf_files:
-                    st.success(f"Found {len(pdf_files)} PDF file(s) in the folder")
-                else:
-                    st.warning("No PDF files found in the specified folder")
-            else:
-                st.error(f"❌ Folder path does not exist or is not a directory")
-                st.code(folder_path)
-                if not folder_path_obj.exists():
-                    st.info("💡 The path does not exist. Please check for typos or verify the folder exists.")
-                elif not folder_path_obj.is_dir():
-                    st.info("💡 This path exists but is a file, not a folder. Please provide a folder path.")
-                st.info("💡 Tip: Copy the full path from File Explorer. Right-click the folder → 'Copy as path'")
+        st.success(f"✅ Uploaded {len(pdf_files)} PDF file(s)")
+
     
     # Process PDF files
     if pdf_files:
@@ -212,7 +160,15 @@ def main():
                     st.warning("No tables found in this PDF")
     
     else:
-        st.info("👆 Please upload PDF files or select a folder to begin")
+        st.info("👆 Please upload PDF files using the sidebar to begin")
+        st.markdown("""
+        ### 💡 Tips for uploading multiple files:
+        - Click **'Browse files'** in the sidebar
+        - Use **Ctrl+A** (Windows/Linux) or **Cmd+A** (Mac) to select all PDFs in a folder
+        - Hold **Ctrl/Cmd** and click to select specific files
+        - You can navigate to different folders and select files from multiple locations
+        - All selected files will be processed together
+        """)
 
 if __name__ == "__main__":
     main()
