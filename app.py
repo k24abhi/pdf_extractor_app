@@ -175,6 +175,7 @@ def main():
                         st.markdown(f"### 📊 Table {current_idx + 1} (Page {table_info['page']})")
                         df = table_info['dataframe']
                         csv = df.to_csv(index=False)
+                        st.markdown("### use previous and next buttons to navigate between tables")
                         st.download_button(
                             label=f"📥 Download Table {current_idx + 1} as CSV",
                             data=csv,
